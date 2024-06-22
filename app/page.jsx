@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FiDownload } from "react-icons/fi";
+import axios from 'axios';
 
 const Home = () => {
     const [url, setUrl] = useState("");
@@ -14,12 +15,22 @@ const Home = () => {
         return regex.test(url);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (validateYouTubeUrl(url)) {
             setError("");
-            // Handle valid YouTube URL submission
-            console.log("Valid YouTube URL:", url);
+            try {
+                const response = await axios.post('http://localhost:5000/download', { url }, { responseType: 'blob' });
+                const downloadUrl = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.setAttribute('download', 'video.mp4');
+                document.body.appendChild(link);
+                link.click();
+            } catch (error) {
+                console.error('Error downloading video:', error);
+                setError('Failed to download video. Please try again.');
+            }
         } else {
             setError("Please enter a valid YouTube URL.");
         }
@@ -47,6 +58,7 @@ const Home = () => {
                         </div>
                         {/* Btn */}
                         <Button
+                            type="submit"
                             variant="outline"
                             size="lg"
                             className="uppercase flex items-center gap-2 font-extrabold"
